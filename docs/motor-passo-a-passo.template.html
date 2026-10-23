@@ -1,0 +1,519 @@
+<title>Motor de Regras Passo a Passo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: uma coluna de leitura; seis etapas numeradas (a ordem é real: é o pipeline do motor). */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --ink: #14212b;
+  --muted: #5b6b78;
+  --line: #d5dde3;
+  --accent: #0d6e7a;
+  --accent-soft: #dcefF1;
+  --ok: #1d7a3e;
+  --ok-soft: #e1f3e7;
+  --no: #b3261e;
+  --no-soft: #fbe6e4;
+  --skip: #8796a1;
+  --code-bg: #eef2f5;
+  --hl: #fff2c2;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f171d; --surface: #16222a; --ink: #e3eaef; --muted: #93a4b0; --line: #2a3a45;
+    --accent: #4fc3cf; --accent-soft: #143a40; --ok: #5fd08a; --ok-soft: #15301f;
+    --no: #ff8a80; --no-soft: #3a1a18; --skip: #6c7e8a; --code-bg: #101c23; --hl: #4a3f12;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f171d; --surface: #16222a; --ink: #e3eaef; --muted: #93a4b0; --line: #2a3a45;
+  --accent: #4fc3cf; --accent-soft: #143a40; --ok: #5fd08a; --ok-soft: #15301f;
+  --no: #ff8a80; --no-soft: #3a1a18; --skip: #6c7e8a; --code-bg: #101c23; --hl: #4a3f12;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+main { max-width: 920px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 22px; font-weight: 700; }
+h3 { font-size: 16px; font-weight: 700; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--f-mono); font-size: 0.86em; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+header { display: grid; gap: 12px; }
+
+/* Pipeline */
+.pipeline { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+.pipeline a { text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 999px; padding: 6px 12px; font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+.pipeline a:hover, .pipeline a:focus-visible { border-color: var(--accent); outline: none; }
+.pipeline .n { font-family: var(--f-mono); color: var(--accent); font-weight: 600; }
+.pipeline .seta { color: var(--muted); }
+
+/* Escolha do exemplo */
+.painel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: inherit; font-size: 13px; cursor: pointer; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  border-radius: 6px; padding: 6px 10px; text-align: left; }
+.chip:hover { border-color: var(--accent); }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.chip small { display: block; font-family: var(--f-mono); font-size: 11px; opacity: 0.8; }
+textarea { width: 100%; min-height: 150px; font-family: var(--f-mono); font-size: 12.5px; line-height: 1.5; color: var(--ink);
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; resize: vertical; }
+textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+label { font-weight: 600; font-size: 13px; }
+
+/* Etapas */
+.etapa { display: grid; grid-template-columns: 44px 1fr; gap: 16px; scroll-margin-top: 16px; }
+.etapa > .num { font-family: var(--f-display); font-weight: 700; font-size: 28px; color: var(--accent); line-height: 1; padding-top: 2px; }
+.etapa > .corpo { display: grid; gap: 12px; min-width: 0; }
+@media (max-width: 560px) { .etapa { grid-template-columns: 1fr; gap: 6px; } }
+
+.tabela { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.mono, td code { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+pre.json { margin: 0; overflow-x: auto; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+  font-family: var(--f-mono); font-size: 12.5px; line-height: 1.6; }
+.json .usado { background: var(--hl); border-radius: 3px; padding: 0 2px; font-weight: 600; }
+.json .descartado { color: var(--skip); }
+.legenda { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); }
+.legenda span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.legenda .l-usado::before { background: var(--hl); }
+.legenda .l-desc::before { background: var(--skip); }
+
+.pill { display: inline-block; font-family: var(--f-mono); font-size: 11.5px; font-weight: 600; border-radius: 4px; padding: 1px 7px; white-space: nowrap; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.no { background: var(--no-soft); color: var(--no); }
+.pill.skip { background: var(--code-bg); color: var(--skip); }
+
+/* Avaliação das regras */
+.regras { display: grid; gap: 8px; }
+.regra { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 10px 12px; display: grid; gap: 8px; }
+.regra.venceu { border-color: var(--ok); box-shadow: inset 4px 0 0 var(--ok); }
+.regra.pulada { opacity: 0.55; }
+.regra .topo { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.regra .cod { font-family: var(--f-mono); font-weight: 600; }
+.regra .cat { color: var(--muted); font-size: 13px; }
+.regra .topo .pill { margin-left: auto; }
+.arvore { display: grid; gap: 4px; font-size: 13px; }
+.arvore .grupo { border-left: 2px solid var(--line); padding-left: 10px; display: grid; gap: 4px; }
+.arvore .rotulo { font-family: var(--f-mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.folha { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.folha .expr { font-family: var(--f-mono); font-size: 12px; }
+.folha .porque { color: var(--muted); font-size: 12.5px; }
+
+.saida { font-family: var(--f-mono); font-size: 16px; background: var(--ink); color: var(--bg); border-radius: 8px; padding: 14px 16px; overflow-x: auto; }
+.nota { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 13.5px; }
+.erro { border-left: 3px solid var(--no); background: var(--no-soft); padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 13.5px; }
+.numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.numeros div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: grid; gap: 2px; }
+.numeros strong { font-family: var(--f-display); font-size: 24px; font-variant-numeric: tabular-nums; }
+.numeros span { font-size: 12.5px; color: var(--muted); }
+footer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<main>
+  <header>
+    <span class="eyebrow">Hackathon Ideen 2026 · Desafio 1</span>
+    <h1>Como o motor classifica uma duplicata</h1>
+    <p class="muted">Escolha um exemplo (ou edite o JSON) e acompanhe as seis etapas que o motor executa. Esta página roda a mesma lógica do motor em Rust, com o mesmo arquivo de regras.</p>
+    <nav class="pipeline" aria-label="Etapas">
+      <a href="#e1"><span class="n">1</span>Carrega regras</a><span class="seta">→</span>
+      <a href="#e2"><span class="n">2</span>Monta o esquema</a><span class="seta">→</span>
+      <a href="#e3"><span class="n">3</span>Lê a linha</a><span class="seta">→</span>
+      <a href="#e4"><span class="n">4</span>Confere tipos</a><span class="seta">→</span>
+      <a href="#e5"><span class="n">5</span>Avalia em ordem</a><span class="seta">→</span>
+      <a href="#e6"><span class="n">6</span>Escreve a saída</a>
+    </nav>
+  </header>
+
+  <section class="painel" aria-labelledby="t-ex">
+    <h2 id="t-ex">Duplicata de entrada</h2>
+    <div class="chips" id="chips" role="group" aria-label="Exemplos"></div>
+    <label for="entrada">Uma linha do <code>entrada.jsonl</code> (pode editar)</label>
+    <textarea id="entrada" spellcheck="false"></textarea>
+  </section>
+
+  <section class="etapa" id="e1">
+    <div class="num">1</div>
+    <div class="corpo">
+      <h2>Carrega as regras do arquivo</h2>
+      <p>Na largada, o motor lê <code>regras/duplicatas.json</code>, valida cada condição (operador conhecido, literal no tipo declarado, nenhuma chave com erro de digitação) e compila tudo numa árvore em memória. O código do motor não tem nenhuma regra de negócio: a tabela abaixo foi gerada a partir do JSON.</p>
+      <div class="tabela"><table><thead><tr><th>Ordem</th><th>Código</th><th>Categoria</th><th>Condição (lida do JSON)</th></tr></thead><tbody id="tab-regras"></tbody></table></div>
+      <p class="muted">Sem regra satisfeita, a saída é <code id="sem-regra"></code>. Data de referência: <code id="data-ref"></code>.</p>
+    </div>
+  </section>
+
+  <section class="etapa" id="e2">
+    <div class="num">2</div>
+    <div class="corpo">
+      <h2>Monta o esquema de leitura</h2>
+      <p>Ainda na carga, o motor percorre as regras e anota cada campo que elas citam (mais o <code>id</code>). Cada campo ganha uma posição fixa num vetor. É por isso que o motor é rápido sem deixar de ser genérico: ele só guarda o que as regras usam, e essa lista vem do arquivo, não do código.</p>
+      <div class="tabela"><table><thead><tr><th>Posição</th><th>Campo</th><th>Tipo exigido pelas regras</th><th>Usado em</th></tr></thead><tbody id="tab-esquema"></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="etapa" id="e3">
+    <div class="num">3</div>
+    <div class="corpo">
+      <h2>Lê a linha e guarda só o que importa</h2>
+      <p id="p-leitura">O parser JSON é estrito: valida a linha inteira, mas só copia os campos do esquema. O resto é conferido e descartado sem alocar memória.</p>
+      <div id="aviso-linha"></div>
+      <pre class="json" id="json-vis" aria-label="Linha lida"></pre>
+      <div class="legenda"><span class="l-usado">guardado (citado por alguma regra)</span><span class="l-desc">validado e descartado</span></div>
+    </div>
+  </section>
+
+  <section class="etapa" id="e4">
+    <div class="num">4</div>
+    <div class="corpo">
+      <h2>Confere o tipo de cada campo</h2>
+      <p>Cada condição declara o tipo que espera. Campo ausente, nulo ou de outro tipo deixa a condição <strong>falsa</strong>, inclusive para <code>!=</code>. Texto compara exato (com caixa e espaços). Data só vale em <code>AAAA-MM-DD</code> e se existir no calendário.</p>
+      <div class="tabela"><table><thead><tr><th>Campo</th><th>Valor na linha</th><th>Tipo exigido</th><th>Resultado</th></tr></thead><tbody id="tab-tipos"></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="etapa" id="e5">
+    <div class="num">5</div>
+    <div class="corpo">
+      <h2>Avalia as regras em ordem e para na primeira verdadeira</h2>
+      <p>R01 primeiro, depois R02, e assim por diante. Dentro de uma regra, <code>todas</code> (E) para no primeiro falso e <code>alguma</code> (OU) para no primeiro verdadeiro. Quando uma regra dá verdadeiro, as seguintes nem são avaliadas.</p>
+      <div class="regras" id="regras-aval"></div>
+    </div>
+  </section>
+
+  <section class="etapa" id="e6">
+    <div class="num">6</div>
+    <div class="corpo">
+      <h2>Escreve a linha de saída</h2>
+      <p>Uma linha por duplicata no stdout, no formato exato que o <code>medir.py</code> e a banca leem. Nada mais vai para a saída padrão; avisos (linha inválida, sem <code>id</code>) vão para o stderr.</p>
+      <div class="saida" id="saida" aria-live="polite"></div>
+      <p class="muted">Depois disso o motor passa para a próxima linha e repete as etapas 3 a 6. As etapas 1 e 2 acontecem uma vez só.</p>
+    </div>
+  </section>
+
+  <section class="painel" aria-labelledby="t-num">
+    <h2 id="t-num">No arquivo inteiro</h2>
+    <div class="numeros">
+      <div><strong>200.000</strong><span>duplicatas do set grande, 100% de acerto</span></div>
+      <div><strong>0,45 s</strong><span>tempo total com Docker e 1 CPU (mediana de 3)</span></div>
+      <div><strong>~0,17 s</strong><span>desse tempo é só a subida do contêiner</span></div>
+      <div><strong>600.000</strong><span>registros sujos conferidos contra o oráculo, 100%</span></div>
+    </div>
+  </section>
+
+  <footer>Esta página reimplementa em JavaScript a lógica da solução Rust (<code>solucao-rust/src/semantica.rs</code>, <code>documento.rs</code> e <code>regras.rs</code>) e embute o mesmo <code>solucao-rust/regras/duplicatas.json</code>. O motor que vale para o ranking é o binário Rust. O repositório tem também a solução <code>solucao-go_cel</code>, com as mesmas regras escritas em CEL e os mesmos resultados, porém mais lenta (2,1 s no set grande).</footer>
+</main>
+
+<script type="application/json" id="regras-json">__REGRAS__</script>
+<script>
+(function () {
+  const REGRAS = JSON.parse(document.getElementById("regras-json").textContent);
+  const AUSENTE = Symbol("ausente");
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const OPS = { "=": "=", "!=": "≠", "<": "<", "<=": "≤", ">": ">", ">=": "≥", em: "em", comeca_com: "começa com", vazio: "está vazio" };
+
+  // ---------- Semântica (espelho de solucao-rust/src/semantica.rs) ----------
+  function data(s) {
+    if (typeof s !== "string" || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s) || s.length !== 10) return null;
+    const a = +s.slice(0, 4), m = +s.slice(5, 7), d = +s.slice(8, 10);
+    const bis = (a % 4 === 0 && a % 100 !== 0) || a % 400 === 0;
+    const dias = [31, bis ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
+    if (!dias || a === 0 || d === 0 || d > dias) return null;
+    return a * 10000 + m * 100 + d;
+  }
+  function descrever(v) {
+    if (v === AUSENTE) return "ausente";
+    if (v === null) return "nulo";
+    if (Array.isArray(v)) return "lista";
+    if (typeof v === "string") return "texto";
+    if (typeof v === "number") return "número";
+    if (typeof v === "boolean") return "booleano";
+    return "objeto";
+  }
+  function ler(v, tipo) {
+    const d = descrever(v);
+    if (tipo === "texto") return typeof v === "string" ? { ok: true, v } : { ok: false, motivo: d === "ausente" || d === "nulo" ? d : `é ${d}, não texto` };
+    if (tipo === "numero") return typeof v === "number" && isFinite(v) ? { ok: true, v } : { ok: false, motivo: d === "ausente" || d === "nulo" ? d : `é ${d}, não número` };
+    if (tipo === "booleano") return typeof v === "boolean" ? { ok: true, v } : { ok: false, motivo: d === "ausente" || d === "nulo" ? d : `é ${d}, não booleano` };
+    if (tipo === "data") {
+      if (typeof v !== "string") return { ok: false, motivo: d === "ausente" || d === "nulo" ? d : `é ${d}, não data` };
+      const n = data(v);
+      return n === null ? { ok: false, motivo: "data inválida ou fora de AAAA-MM-DD" } : { ok: true, v: n, txt: v };
+    }
+  }
+  const vazio = (v) => v === AUSENTE || v === null || v === "";
+  function buscar(doc, caminho) {
+    let a = doc;
+    for (const p of caminho.split(".")) {
+      if (a === null || typeof a !== "object" || Array.isArray(a) || !Object.prototype.hasOwnProperty.call(a, p)) return AUSENTE;
+      a = a[p];
+    }
+    return a;
+  }
+  // NaN/Infinity não são JSON: viram [] fora de texto (espelho de neutralizar_nao_numeros).
+  function neutralizar(txt) {
+    let out = "", dentro = false, trocou = false;
+    for (let i = 0; i < txt.length; i++) {
+      const c = txt[i];
+      if (dentro) { out += c; if (c === "\\" && i + 1 < txt.length) { out += txt[++i]; } else if (c === '"') dentro = false; continue; }
+      const t = ["-Infinity", "Infinity", "NaN"].find((t) => txt.startsWith(t, i));
+      if (t) { out += "[]"; i += t.length - 1; trocou = true; continue; }
+      dentro = c === '"'; out += c;
+    }
+    return trocou ? out : null;
+  }
+
+  // ---------- Regras (espelho de solucao-rust/src/regras.rs) ----------
+  const fmtLit = (v) => (typeof v === "string" ? `"${v}"` : String(v));
+  function alvoTexto(c) {
+    if ("campo_comparado" in c) return c.campo_comparado;
+    if ("variavel" in c) return `${c.variavel}`;
+    if (c.op === "em") return "[" + c.valor.map(fmtLit).join(", ") + "]";
+    return fmtLit(c.valor);
+  }
+  function condTexto(c, raiz) {
+    if (c.todas) { const s = c.todas.map((x) => condTexto(x)).join(" E "); return raiz ? s : `(${s})`; }
+    if (c.alguma) { const s = c.alguma.map((x) => condTexto(x)).join(" OU "); return raiz ? s : `(${s})`; }
+    if (c.op === "vazio") return `${c.campo} está vazio`;
+    return `${c.campo} ${OPS[c.op]} ${alvoTexto(c)}`;
+  }
+  function comparar(op, a, b) {
+    switch (op) {
+      case "=": return a === b;
+      case "!=": return a !== b;
+      case "<": return a < b;
+      case "<=": return a <= b;
+      case ">": return a > b;
+      case ">=": return a >= b;
+      case "comeca_com": return a.startsWith(b);
+    }
+  }
+  const mostra = (r) => (r.txt !== undefined ? r.txt : typeof r.v === "string" ? `"${r.v}"` : String(r.v));
+  function bruto(v) {
+    if (v === AUSENTE) return "ausente";
+    if (Array.isArray(v) && v.length === 0) return "NaN/Infinity";
+    return JSON.stringify(v);
+  }
+
+  // Avalia e devolve o rastro: { ok, html }
+  function avaliar(c, doc) {
+    if (c.todas || c.alguma) {
+      const e = !!c.todas, filhos = c.todas || c.alguma;
+      let ok = e, parou = false, partes = [];
+      for (const f of filhos) {
+        if (parou) { partes.push(`<div class="folha"><span class="pill skip">não avaliada</span><span class="expr">${esc(condTexto(f))}</span></div>`); continue; }
+        const r = avaliar(f, doc);
+        partes.push(r.html);
+        if (e && !r.ok) { ok = false; parou = true; }
+        if (!e && r.ok) { ok = true; parou = true; }
+      }
+      const rot = e ? "todas (E)" : "alguma (OU)";
+      return { ok, html: `<div class="grupo"><span class="rotulo">${rot} → ${ok ? "verdadeiro" : "falso"}</span>${partes.join("")}</div>` };
+    }
+    const expr = esc(condTexto(c));
+    const v = buscar(doc, c.campo);
+    if (c.op === "vazio") {
+      const ok = vazio(v);
+      return { ok, html: folha(ok, expr, `${c.campo} é ${esc(bruto(v))}: ${ok ? "vazio" : "não é vazio (só ausente, nulo ou \"\" contam)"}`) };
+    }
+    const a = ler(v, c.tipo);
+    if (!a.ok) return { ok: false, html: folha(false, expr, `${c.campo} ${esc(a.motivo)} → condição falsa`) };
+    let b, desc;
+    if ("campo_comparado" in c) {
+      const rb = ler(buscar(doc, c.campo_comparado), c.tipo);
+      if (!rb.ok) return { ok: false, html: folha(false, expr, `${c.campo_comparado} ${esc(rb.motivo)} → condição falsa`) };
+      b = rb.v; desc = `${esc(mostra(a))} ${OPS[c.op]} ${esc(mostra(rb))}`;
+    } else {
+      const lit = "variavel" in c ? REGRAS.variaveis[c.variavel] : c.valor;
+      if (c.op === "em") {
+        const ok = lit.includes(a.v);
+        return { ok, html: folha(ok, expr, `${esc(mostra(a))} ${ok ? "está" : "não está"} na lista`) };
+      }
+      b = c.tipo === "data" ? data(lit) : lit;
+      desc = `${esc(mostra(a))} ${OPS[c.op]} ${esc(fmtLit(lit))}`;
+    }
+    const ok = comparar(c.op, a.v, b);
+    return { ok, html: folha(ok, expr, desc) };
+  }
+  function folha(ok, expr, porque) {
+    return `<div class="folha"><span class="pill ${ok ? "ok" : "no"}">${ok ? "V" : "F"}</span><span class="expr">${expr}</span><span class="porque">${porque}</span></div>`;
+  }
+
+  // ---------- Esquema (espelho de Esquema::posicao) ----------
+  const esquema = [{ campo: "id", tipos: new Set(), regras: new Set() }];
+  function registrar(campo, tipo, cod) {
+    let e = esquema.find((x) => x.campo === campo);
+    if (!e) { e = { campo, tipos: new Set(), regras: new Set() }; esquema.push(e); }
+    if (tipo) e.tipos.add(tipo);
+    e.regras.add(cod);
+  }
+  function coletar(c, cod) {
+    if (c.todas || c.alguma) return (c.todas || c.alguma).forEach((x) => coletar(x, cod));
+    registrar(c.campo, c.op === "vazio" ? "vazio?" : c.tipo, cod);
+    if (c.campo_comparado) registrar(c.campo_comparado, c.tipo, cod);
+  }
+  REGRAS.regras.forEach((r) => coletar(r.condicao, r.codigo));
+  const usados = new Set(esquema.map((e) => e.campo));
+
+  // ---------- Etapas fixas (1 e 2) ----------
+  $("tab-regras").innerHTML = REGRAS.regras.map((r, i) =>
+    `<tr><td class="mono">${i + 1}</td><td><code>${r.codigo}</code></td><td>${esc(r.categoria)}</td><td><code style="white-space:normal">${esc(condTexto(r.condicao, true))}</code></td></tr>`).join("");
+  $("sem-regra").textContent = REGRAS.sem_regra;
+  $("data-ref").textContent = REGRAS.variaveis.data_referencia;
+  $("tab-esquema").innerHTML = esquema.map((e, i) =>
+    `<tr><td class="mono">${i}</td><td><code>${e.campo}</code></td><td>${e.campo === "id" ? "<span class=\"muted\">identifica a linha na saída</span>" : [...e.tipos].join(", ")}</td><td class="mono">${[...e.regras].join(" ")}</td></tr>`).join("");
+
+  // ---------- Exemplos ----------
+  const BASE = {
+    id: 1, iud: "61853939617693296424", numero: "107021/6", status: "ATIVA",
+    data_emissao: "2026-08-27", data_vencimento: "2026-12-31",
+    sacador: { cnpj: "76054485338705", uf: "SC", porte: "MEDIA" },
+    sacado: { cnpj: "23663297118298", uf: "SC", segmento: "SAUDE" },
+    financeiro: { valor: 27821.81, valor_pago: 0, moeda: "BRL", parcela: 3, total_parcelas: 3, tipo_negociacao: null, taxa_juros_mensal: 2.09 },
+    pagamento: { instrumento: "BOLETO", compe: "756", tipo_conta: "CCOR" },
+    fiscal: { chave_nfe: "57704238582046710595978217864422302149821411", cfop: "5102" },
+    logistica: { modal: "FERROVIARIO", transportadora_cnpj: "74720862750238", uf_origem: "SC", uf_destino: "SC", peso_kg: 26769.2, status_entrega: "ENTREGUE", data_entrega: "2026-09-09", migo: true },
+    manifestacao: { tipo: null, data: null },
+  };
+  const EXEMPLOS = [
+    { nome: "Nada a destacar", dica: "SEM_REGRA", alt: {} },
+    { nome: "Vencida em aberto", dica: "R05", alt: { data_vencimento: "2026-10-22" } },
+    { nome: "Valor em texto", dica: "\"150000\" não é número", alt: { "financeiro.tipo_negociacao": "CSFD", "financeiro.valor": "150000" } },
+    { nome: "Data que não existe", dica: "2026-02-30", alt: { data_vencimento: "2026-02-30" } },
+    { nome: "Conflito de ordem", dica: "R09 antes de R10", alt: { "logistica.modal": "AEREO", "logistica.peso_kg": 600, "logistica.migo": false } },
+    { nome: "Avaria sem manifestação", dica: "R04 · \"está vazio\"", alt: { "logistica.status_entrega": "AVARIADA", "manifestacao.tipo": "" } },
+    { nome: "Booleano em texto", dica: "migo: \"false\"", alt: { "logistica.migo": "false" } },
+    { nome: "UF de destino ausente", dica: "≠ com ausente é falso", alt: { "logistica.uf_destino": AUSENTE } },
+    { nome: "NaN no lugar de texto", dica: "uf_origem: NaN", alt: { "logistica.uf_origem": "__NaN__", "logistica.uf_destino": "SP" } },
+    { nome: "Limite exato", dica: "valor = 500000 · R07", alt: { "financeiro.valor": 500000 } },
+  ];
+  function montar(ex, i) {
+    const d = JSON.parse(JSON.stringify(BASE));
+    d.id = 101 + i;
+    for (const [c, v] of Object.entries(ex.alt)) {
+      const p = c.split("."); let a = d;
+      for (const k of p.slice(0, -1)) a = a[k];
+      if (v === AUSENTE) delete a[p[p.length - 1]]; else a[p[p.length - 1]] = v;
+    }
+    return JSON.stringify(d).replace('"__NaN__"', "NaN");
+  }
+  const chips = $("chips");
+  EXEMPLOS.forEach((ex, i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.id = "ex-" + i;
+    b.innerHTML = `${esc(ex.nome)}<small>${esc(ex.dica)}</small>`;
+    b.addEventListener("click", () => { selecionar(i); });
+    chips.appendChild(b);
+  });
+  function selecionar(i) {
+    [...chips.children].forEach((c, j) => c.setAttribute("aria-pressed", String(i === j)));
+    $("entrada").value = montar(EXEMPLOS[i], i);
+    executar();
+  }
+
+  // ---------- Visualização do JSON com campos guardados ----------
+  function pintar(v, caminho, nivel) {
+    const pad = "  ".repeat(nivel + 1), fim = "  ".repeat(nivel);
+    if (v !== null && typeof v === "object" && !Array.isArray(v)) {
+      const ks = Object.keys(v);
+      if (!ks.length) return "{}";
+      return "{\n" + ks.map((k, i) => {
+        const cam = caminho ? caminho + "." + k : k;
+        const filho = v[k];
+        const ehObj = filho !== null && typeof filho === "object" && !Array.isArray(filho);
+        const temUsado = [...usados].some((u) => u === cam || u.startsWith(cam + "."));
+        const val = pintar(filho, cam, nivel + 1);
+        const linha = `"${esc(k)}": ${val}${i < ks.length - 1 ? "," : ""}`;
+        if (usados.has(cam) && !ehObj) return pad + `<span class="usado">${linha}</span>`;
+        if (ehObj && temUsado) return pad + linha;
+        return pad + `<span class="descartado">${linha}</span>`;
+      }).join("\n") + "\n" + fim + "}";
+    }
+    if (Array.isArray(v) && v.length === 0) return "[]";
+    return esc(JSON.stringify(v));
+  }
+
+  // ---------- Execução ----------
+  function executar() {
+    const txt = $("entrada").value.trim();
+    let doc, aviso = "";
+    try { doc = JSON.parse(txt); }
+    catch (e) {
+      const n = neutralizar(txt);
+      try { if (n === null) throw e; doc = JSON.parse(n); aviso = `<div class="nota"><strong>NaN / Infinity encontrado.</strong> Não é JSON válido, então o motor troca o token por <code>[]</code> e lê a linha de novo. Lista não é texto, número, booleano nem data, e não é "vazio": o campo conta como tipo errado em qualquer regra, e o <code>id</code> não se perde.</div>`; }
+      catch (_) { doc = undefined; }
+    }
+    if (doc === undefined || doc === null || typeof doc !== "object" || Array.isArray(doc)) {
+      $("aviso-linha").innerHTML = `<div class="erro"><strong>Linha inválida.</strong> Não é um objeto JSON. O motor escreve <code>aviso: linha N: JSON inválido, ignorada</code> no stderr e segue para a próxima linha.</div>`;
+      $("json-vis").textContent = txt; $("tab-tipos").innerHTML = ""; $("regras-aval").innerHTML = "";
+      $("saida").textContent = "(nenhuma linha de saída para esta entrada)";
+      return;
+    }
+    $("aviso-linha").innerHTML = aviso;
+    $("json-vis").innerHTML = pintar(doc, "", 0);
+
+    $("tab-tipos").innerHTML = esquema.filter((e) => e.campo !== "id").map((e) => {
+      const v = buscar(doc, e.campo);
+      const tipos = [...e.tipos];
+      const res = tipos.map((t) => {
+        if (t === "vazio?") return vazio(v) ? `<span class="pill ok">vazio</span>` : `<span class="pill skip">não vazio</span>`;
+        const r = ler(v, t);
+        return r.ok ? `<span class="pill ok">ok · ${esc(mostra(r))}</span>` : `<span class="pill no">${esc(r.motivo)}</span>`;
+      }).join(" ");
+      return `<tr><td><code>${e.campo}</code></td><td class="mono">${esc(bruto(v))}</td><td>${tipos.map((t) => (t === "vazio?" ? "está vazio?" : t)).join(", ")}</td><td>${res}</td></tr>`;
+    }).join("");
+
+    let vencedora = null;
+    $("regras-aval").innerHTML = REGRAS.regras.map((r) => {
+      if (vencedora) return `<div class="regra pulada"><div class="topo"><span class="cod">${r.codigo}</span><span class="cat">${esc(r.categoria)}</span><span class="pill skip">não avaliada</span></div></div>`;
+      const res = avaliar(r.condicao, doc);
+      if (res.ok) vencedora = r.codigo;
+      return `<div class="regra${res.ok ? " venceu" : ""}"><div class="topo"><span class="cod">${r.codigo}</span><span class="cat">${esc(r.categoria)}</span><span class="pill ${res.ok ? "ok" : "no"}">${res.ok ? "verdadeira · classifica" : "falsa"}</span></div><div class="arvore">${res.html}</div></div>`;
+    }).join("") + (vencedora ? "" : `<div class="regra venceu"><div class="topo"><span class="cod">${REGRAS.sem_regra}</span><span class="cat">nenhuma das 12 regras foi satisfeita</span></div></div>`);
+
+    const id = doc.id;
+    if (typeof id === "number" || typeof id === "string") {
+      $("saida").textContent = `id:${id} - regra: ${vencedora || REGRAS.sem_regra}`;
+    } else {
+      $("saida").textContent = "(sem id: aviso no stderr, nenhuma linha de saída)";
+    }
+  }
+
+  // Usado por docs/conferir_artifact.js para provar que a página classifica igual ao motor.
+  window.classificarLinha = function (txt) {
+    let doc;
+    try { doc = JSON.parse(txt); } catch (e) { const n = neutralizar(txt); if (n === null) return null; try { doc = JSON.parse(n); } catch (_) { return null; } }
+    if (doc === null || typeof doc !== "object" || Array.isArray(doc)) return null;
+    const r = REGRAS.regras.find((x) => avaliar(x.condicao, doc).ok);
+    return `id:${doc.id} - regra: ${r ? r.codigo : REGRAS.sem_regra}`;
+  };
+
+  let t;
+  $("entrada").addEventListener("input", () => {
+    [...chips.children].forEach((c) => c.setAttribute("aria-pressed", "false"));
+    clearTimeout(t); t = setTimeout(executar, 150);
+  });
+  selecionar(4);
+})();
+</script>

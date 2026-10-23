@@ -1,0 +1,34 @@
+{
+  "dominio": "duplicatas escriturais",
+  "descricao": "Tabela de regras do ENUNCIADO.md em CEL. Avaliadas em ordem; a primeira verdadeira classifica. texto()/numero()/booleano()/data() exigem o tipo: campo ausente ou de outro tipo deixa a regra falsa.",
+  "variaveis": {
+    "data_referencia": "2026-10-23"
+  },
+  "sem_regra": "SEM_REGRA",
+  "regras": [
+    { "codigo": "R01", "categoria": "Fora da carteira",
+      "condicao": "texto(status) in ['CANCELADA', 'LIQUIDADA']" },
+    { "codigo": "R02", "categoria": "Risco de operação inexistente",
+      "condicao": "texto(logistica.status_entrega) == 'DEVOLVIDA' || texto(manifestacao.tipo) == 'RCOP'" },
+    { "codigo": "R03", "categoria": "Recusada pelo sacado",
+      "condicao": "texto(manifestacao.tipo) in ['RCAV', 'RCQQ', 'RCVN', 'RCVL']" },
+    { "codigo": "R04", "categoria": "Candidata a recusa por avaria",
+      "condicao": "texto(logistica.status_entrega) == 'AVARIADA' && vazio(manifestacao.tipo)" },
+    { "codigo": "R05", "categoria": "Vencida em aberto",
+      "condicao": "data(data_vencimento) < data(variaveis.data_referencia) && numero(financeiro.valor_pago) < numero(financeiro.valor)" },
+    { "codigo": "R06", "categoria": "Garantia relevante",
+      "condicao": "texto(financeiro.tipo_negociacao) in ['CSFD', 'PENR'] && numero(financeiro.valor) >= 100000" },
+    { "codigo": "R07", "categoria": "Alto valor",
+      "condicao": "numero(financeiro.valor) >= 500000 || (texto(sacado.segmento) == 'AGRO' && numero(financeiro.valor) >= 200000)" },
+    { "codigo": "R08", "categoria": "CFOP interno em operação interestadual",
+      "condicao": "texto(logistica.uf_origem) != texto(logistica.uf_destino) && texto(fiscal.cfop).startsWith('5')" },
+    { "codigo": "R09", "categoria": "Frete aéreo pesado",
+      "condicao": "texto(logistica.modal) == 'AEREO' && numero(logistica.peso_kg) > 500" },
+    { "codigo": "R10", "categoria": "Entregue sem recebimento no ERP",
+      "condicao": "texto(logistica.status_entrega) == 'ENTREGUE' && booleano(logistica.migo) == false" },
+    { "codigo": "R11", "categoria": "Apta para antecipação",
+      "condicao": "texto(manifestacao.tipo) == 'ACTO' && booleano(logistica.migo) == true" },
+    { "codigo": "R12", "categoria": "Pequeno valor via Pix",
+      "condicao": "texto(pagamento.instrumento) == 'PPIX' && texto(sacador.porte) in ['ME', 'EPP'] && numero(financeiro.valor) <= 5000" }
+  ]
+}

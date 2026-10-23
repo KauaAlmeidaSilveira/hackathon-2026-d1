@@ -1,0 +1,109 @@
+1	SEM_REGRA	base não satisfaz nenhuma regra
+2	R01	R01 LIQUIDADA
+3	R01	R01 CANCELADA
+4	SEM_REGRA	R01 minúsculo não vale
+5	SEM_REGRA	R01 espaço no fim não vale
+6	SEM_REGRA	R01 status ausente
+7	R01	R01 vence R02 pela ordem
+8	R02	R02 DEVOLVIDA
+9	R02	R02 RCOP
+10	R02	R02 vence R03 pela ordem
+11	SEM_REGRA	R02 devolvida minúsculo
+12	R03	R03 RCAV
+13	R03	R03 RCQQ
+14	R03	R03 RCVN
+15	R03	R03 RCVL
+16	SEM_REGRA	R03 minúsculo não vale
+17	R03	R03 vence R04 pela ordem
+18	R04	R04 tipo nulo
+19	R04	R04 tipo texto vazio
+20	R04	R04 tipo ausente
+21	R04	R04 manifestacao ausente
+22	R04	R04 manifestacao nula
+23	SEM_REGRA	R04 tipo espaço não é vazio
+24	SEM_REGRA	R04 tipo 0 não é vazio
+25	SEM_REGRA	R04 tipo false não é vazio
+26	R11	R04 ACTO cai em R11
+27	R05	R05 vencida ontem
+28	SEM_REGRA	R05 vence hoje não é vencida
+29	R05	R05 pago um centavo a menos
+30	SEM_REGRA	R05 pago igual
+31	SEM_REGRA	R05 pago a mais
+32	SEM_REGRA	R05 data inexistente
+33	SEM_REGRA	R05 29/02 em ano não bissexto
+34	R05	R05 29/02 em ano bissexto
+35	SEM_REGRA	R05 mês sem zero
+36	SEM_REGRA	R05 formato brasileiro
+37	SEM_REGRA	R05 data com hora
+38	SEM_REGRA	R05 data com espaço
+39	SEM_REGRA	R05 data numérica
+40	SEM_REGRA	R05 data vazia
+41	SEM_REGRA	R05 data ausente
+42	SEM_REGRA	R05 mês 13
+43	SEM_REGRA	R05 valor_pago texto
+44	SEM_REGRA	R05 valor_pago nulo
+45	SEM_REGRA	R05 valor texto
+46	SEM_REGRA	R05 financeiro ausente
+47	SEM_REGRA	R05 financeiro não é objeto
+48	R05	R05 vence R06 pela ordem
+49	R06	R06 CSFD no limite
+50	R06	R06 PENR no limite decimal
+51	SEM_REGRA	R06 PENR abaixo do limite
+52	SEM_REGRA	R06 valor texto
+53	SEM_REGRA	R06 valor texto alto
+54	SEM_REGRA	R06 CSCO não vale
+55	R06	R06 notação 1E5
+56	R06	R06 vence R07 pela ordem
+57	SEM_REGRA	R06 valor NaN
+58	SEM_REGRA	R06 valor Infinity
+59	SEM_REGRA	R06 valor booleano
+60	R07	R07 no limite
+61	SEM_REGRA	R07 abaixo do limite
+62	R07	R07 AGRO no limite
+63	SEM_REGRA	R07 AGRO abaixo
+64	SEM_REGRA	R07 agro minúsculo
+65	SEM_REGRA	R07 não AGRO 300 mil
+66	SEM_REGRA	R07 AGRO sem valor
+67	R07	R07 notação 5e5
+68	R08	R08 interestadual CFOP 5
+69	SEM_REGRA	R08 CFOP 6
+70	SEM_REGRA	R08 CFOP numérico
+71	R08	R08 CFOP só 5
+72	SEM_REGRA	R08 CFOP vazio
+73	SEM_REGRA	R08 CFOP com espaço antes
+74	SEM_REGRA	R08 destino nulo
+75	SEM_REGRA	R08 destino ausente
+76	SEM_REGRA	R08 origem ausente
+77	SEM_REGRA	R08 destino numérico
+78	R08	R08 caixa diferente conta como diferente
+79	R08	R08 destino vazio
+80	SEM_REGRA	R08 fiscal ausente
+81	SEM_REGRA	R08 origem NaN não é texto
+82	SEM_REGRA	R04 tipo NaN não é vazio
+83	SEM_REGRA	logistica não é objeto
+84	SEM_REGRA	R09 peso no limite
+85	R09	R09 peso acima
+86	SEM_REGRA	R09 peso texto
+87	SEM_REGRA	R09 aereo minúsculo
+88	R09	R09 vence R10 pela ordem
+89	R10	R10 migo false
+90	SEM_REGRA	R10 migo texto false
+91	SEM_REGRA	R10 migo 0
+92	SEM_REGRA	R10 migo nulo
+93	SEM_REGRA	R10 migo ausente
+94	SEM_REGRA	R10 EM_TRANSITO
+95	R10	R10 vence R11 pela ordem
+96	R11	R11 ACTO migo true
+97	SEM_REGRA	R11 migo 1
+98	SEM_REGRA	R11 migo texto true
+99	SEM_REGRA	R11 ANTC não vale
+100	R11	R11 em trânsito também vale
+101	R12	R12 ME no limite
+102	R12	R12 EPP
+103	SEM_REGRA	R12 acima do limite
+104	SEM_REGRA	R12 porte MEDIA
+105	SEM_REGRA	R12 PIX não é PPIX
+106	R12	R12 valor negativo
+107	SEM_REGRA	R12 valor texto
+108	SEM_REGRA	R12 sacador ausente
+109	SEM_REGRA	campo extra ignorado

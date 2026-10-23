@@ -1,0 +1,6 @@
+casos:            100
+acertos:          100 (100.00%)
+ids ausentes:     0
+linhas inválidas: 0
+tempos (s):       0.172, 0.175, 0.186
+mediana (s):      0.175

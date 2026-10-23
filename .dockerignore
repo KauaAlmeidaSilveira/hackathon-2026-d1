@@ -1,0 +1,9 @@
+*
+!solucao-rust/Cargo.toml
+!solucao-rust/Cargo.lock
+!solucao-rust/src
+!solucao-rust/regras
+!solucao-rust/tests
+!solucao-go_cel
+solucao-go_cel/motor
+!testes/bordas*
